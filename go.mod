@@ -1,3 +1,3 @@
-module github.com/53hertz/goweb
+module goweb
 
 go 1.17
