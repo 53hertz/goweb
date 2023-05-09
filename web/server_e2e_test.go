@@ -4,16 +4,16 @@
 package web
 
 import (
-	"fmt"
+	"net/http"
 	"testing"
 )
 
 func TestServer(t *testing.T) {
-	h := &HttpServer{}
-
-	h.Get("/demo", func(ctx Context) {
-		fmt.Println("xxx")
+	h := NewHttpServer()
+	h.addRoute(http.MethodGet, "/user", func(ctx *Context) {
+		ctx.Resp.Write([]byte("hello gopher"))
 	})
 
 	h.Start(":8081")
+
 }

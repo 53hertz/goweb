@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type HandleFunc func(ctx Context)
+type HandleFunc func(ctx *Context)
 
 // 确保 HttpServer 一定实现了 Server
 var _ Server = &HttpServer{}
@@ -15,18 +15,21 @@ type Server interface {
 	Start(addr string) error
 
 	// AddRoute 路由注册
-	AddRoute(method string, path string, handleFunc HandleFunc)
+	addRoute(method string, path string, handleFunc HandleFunc)
 }
 
 type HttpServer struct {
+	router
 }
 
-func (h *HttpServer) AddRoute(method string, path string, handleFunc HandleFunc) {
-
+func NewHttpServer() *HttpServer {
+	return &HttpServer{
+		newRouter(),
+	}
 }
 
 func (h *HttpServer) Get(path string, handleFunc HandleFunc) {
-	h.AddRoute(http.MethodGet, path, handleFunc)
+	h.addRoute(http.MethodGet, path, handleFunc)
 }
 
 // ServeHTTP 处理请求入口
@@ -40,7 +43,13 @@ func (h *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HttpServer) Serve(ctx *Context) {
-
+	node, ok := h.findRoute(ctx.Req.Method, ctx.Req.URL.Path)
+	if !ok || node.handler == nil {
+		ctx.Resp.WriteHeader(404)
+		ctx.Resp.Write([]byte("not found"))
+		return
+	}
+	node.handler(ctx)
 }
 
 func (h *HttpServer) Start(addr string) error {
